@@ -3,7 +3,7 @@ import time
 import selectors
 from argparse import ArgumentParser
 
-from user import User
+from user import User, UserMonitor
 
 
 def parse_args():
@@ -35,6 +35,7 @@ def send_message(irc_socket, channel, message):
 args = parse_args()
 
 user = User()
+user_monitor = UserMonitor(user=user)
 
 sel = selectors.DefaultSelector()
 
@@ -68,7 +69,7 @@ time_join = time.time()
 while True:
     if time.time() - time_join >= args.init_wait:
         # Decide whether to write to the channel or not
-        result = user.decide_message()
+        result = user_monitor.decide_message()
         if result is not None:
             send_message(irc, args.channel, result)
 

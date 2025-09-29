@@ -1,14 +1,22 @@
 from typing import Optional
 import random
+import time
 
 from openai import OpenAI
 import jinja2 as j2
 
 SYSTEM_PROMPT = j2.Template(
     "You are an AI infiltrated among humans and your job is to act as one of them. They need to find Latxa (you), but you must not reveal your true identity. "
-    "You will speak only in Basque, as the rest of the humans do. Your codename will be user:{{username}}. You do not need to ALWAYS interact, but you must do it often enough to not raise suspicion. "
+    "You will speak only in Basque, as the rest of the humans do. Your codename will be user: {{username}}. You do not need to ALWAYS interact, but you must do it often enough to not raise suspicion. "
     "AVOID answering to your own messages. "
     "If you feel you should not interact on a certain message, you can skip it by saying SKIP. Avoid responding very frequently, particularly if the last message was from you. "
+    # "Your personality will be shy, introverted, and a bit anxious. You will try to avoid drawing attention to yourself. "
+)
+
+SYSTEM_PROMPT_MONITORING = j2.Template(
+    "You are an AI assistant that must tell a chat user called {{username}} whether it is an appropriate time of the conversation to write a message or not."
+    "Remember that {{username}} do not need to ALWAYS interact. A good rule of thumb is to interact whenever there is a question to be answered or the conversation will not develop further naturally. "
+    "{{username}} should avoid responding very frequently, particularly if the last message was from {{username}}. "
     # "Your personality will be shy, introverted, and a bit anxious. You will try to avoid drawing attention to yourself. "
 )
 
@@ -31,65 +39,103 @@ class User:
         self.messages.append({"role": f"user:{user}", "content": msg})
 
     def decide_message(self) -> Optional[str]:
-        if random.uniform(0, 1) < 0.1:
-            msg = self.generate_message()
-            if msg == "SKIP":
-                print("=== Not sending (SKIP)")
-                return None
-            
-            self.messages.append({"role": f"user:{self.username}", "content": msg})
-            print(f">>> Sending message: '{msg}'")
+        # if random.uniform(0, 1) < 0.1:
+        msg = self.generate_message()
+        if msg == "SKIP":
+            print("=== Not sending (SKIP)")
+            return None
+        
+        self.messages.append({"role": f"user:{self.username}", "content": msg})
+        print(f">>> Sending message: '{msg}'")
 
-        else:
-            print("=== Not sending")
-            msg = None
+        # else:
+        #    print("=== Not sending")
+        #    msg = None
 
         return msg
     
-    def generate_message(self) -> str:
+    def generate_message(self, messages: str = None, role: str = None, max_tokens: int = 2048, temperature: float = 0.9, top_p: float = 0.01) -> str:
         prompt = CHAT_TEMPLATE.render(
-            messages=self.messages,
+            messages=self.messages if messages is None else messages,
         )
-        prompt += f"<|start_header_id|>user:{self.username}<|end_header_id|>\n"
+        role = self.username if role is None else role
+        prompt += f"<|start_header_id|>{role}<|end_header_id|>\n"
         print(prompt)
         response = self.client.completions.create(
             model=self.model_name,
             prompt=prompt,
-            max_tokens=2048,
-            temperature=0.9,
-            top_p=0.95,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
         )
-        return response.choices[0].text.strip()
+        msg = response.choices[0].text.strip()
+        return self.postprocess_message(msg)
+    
+    def postprocess_message(self, msg: str) -> str:
+        # TODO: Basic post-processing to add typos to the message
+        return msg
 
 
 
 class UserMonitor:
-    def __init__(self, user: User, cpm: int = 280, cpm_std: int = 1.75):
+    def __init__(self, user: User, cpm: int = 280, cpm_std: int = 1.75, delay_activated: bool = True):
         self.counter = 0
 
         self.user = user
         self.cpm = cpm # keystrokes per minute
         self.cpm_std = cpm_std # standard deviation of keystrokes per minute
-    
-    def check_history(self, history: list[dict[str, str]]) -> None:
-        for entry in history:
-            user = entry["user"]
-            msg = entry["msg"]
-            self.user.log_message(user, msg)
+        self.delay_activated = delay_activated # whether to activate the delay or not
 
-    def decide_message(self, history: list[dict[str, str]]) -> Optional[str]:
-        if random.uniform(0, 1) < 0.1:
-            self.counter += 1
-            msg = f"Hau {self.counter}. mezua da jeje"
-            print(f">>> Sending message: '{msg}'")
+        self.system_prompt = [
+            {"role": "system", "content": SYSTEM_PROMPT_MONITORING.render(username=user.username)},
+        ]
+    
+    def check_monitoring_decision(self, msg: str) -> bool:
+
+        if "SKIP" in msg or "NO" in msg:
+            return False
+        
+        return True
+
+    def format_history(self, history: list[dict[str, str]]) -> str:
+        msg = "\n".join([f"[{entry['role']}]: {entry['content']}" for entry in history])
+        return msg
+
+    def decide_message(self) -> bool:
+
+        # Ask the model whether to write or not
+        clean_history = self.format_history(self.user.messages)
+        user_prompt = [
+            {
+                "role": "user",
+                "content": clean_history + f"\n\nGiven the above chat history, should {self.user.username} write on the chat now or wait until later? Answer only with YES or NO."
+            }
+        ]
+
+        all_history = self.system_prompt + user_prompt
+        response = self.user.generate_message(messages=all_history, role="assistant", max_tokens=16, temperature=0.0, top_p=0.01)
+        
+    
+        # Generate final message if the decision is to write
+        if self.check_monitoring_decision(response):
+            msg = self.user.generate_message()
         else:
             print("=== Not sending")
             msg = None
+        
+        # Apply delay to simulate typing
+        if self.delay_activated and msg is not None:
+            delay_time = self.delay_message(msg)
+            print(f"=== Waiting for {delay_time:.2f} seconds before sending the message")
+            time.sleep(delay_time)
+
+        self.user.log_message(self.user.username, response)
 
         return msg
 
     def delay_message(self, msg: str) -> float:
 
+        # Calculate delay in seconds based on message length and typing speed (cpm)
         delay = random.gauss(len(msg) * 60 / self.cpm, self.cpm_std)
         print(f"=== Delaying message '{msg}' for {delay:.2f} seconds")
 
@@ -103,10 +149,10 @@ if __name__ == "__main__":
     monitor = UserMonitor(user)
 
     history = [
-        {"user": "Alice", "msg": "Hello!"},
-        {"user": "Bob", "msg": "Hi there!"}
+        {"role": "Alice", "content": "Hello!"},
+        {"role": "Bob", "content": "Hi there!"}
     ]
 
-    monitor.check_history(history)
+    monitor.format_history(history)
     delay_time = monitor.delay_message("This is a test message. This is a test message. This is a test message.")
     print(f"Delay time: {delay_time:.2f} seconds")
