@@ -1,7 +1,7 @@
 import random
 
 
-def add_typos(message: str, typo_prob: float = 0.01, upper_prob: float = 0.02) -> str:
+def add_typos(message: str, typo_prob: float = 0.008, upper_prob: float = 0.02) -> str:
     """
     Introduce typos into a given message based on a specified probability.
 

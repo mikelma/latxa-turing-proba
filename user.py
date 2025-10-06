@@ -29,8 +29,8 @@ SYSTEM_PROMPT = j2.Template(
 
 SYSTEM_PROMPT_MONITORING = j2.Template(
     "You are an AI assistant that must tell a chat user called {{username}} whether it is an appropriate time of the conversation to write a message or not."
-    "Remember that {{username}} do not need to ALWAYS interact. A good rule of thumb is to interact in the chat whenever there is a question to be answered or the conversation will not develop further naturally. "
-    "{{username}} should avoid responding very frequently, particularly if the last message was from {{username}}. But it is a very good idea to answer whenever someone directly asks something to {{username}}. "
+    "{{username}} needs to interact often enough to not raise suspicion, but not always. "
+    "It is a very good idea to answer whenever someone directly asks something to {{username}}. "
     # "Your personality will be shy, introverted, and a bit anxious. You will try to avoid drawing attention to yourself. "
 )
 
@@ -127,9 +127,8 @@ class UserMonitor:
         ]
 
         all_history = self.system_prompt + user_prompt
-        response = self.user.generate_message(messages=all_history, role="assistant", max_tokens=16, temperature=0.0, top_p=0.01)
+        response = self.user.generate_message(messages=all_history, role="assistant", max_tokens=16, temperature=1.0, top_p=0.95)
         
-    
         # Generate final message if the decision is to write
         if self.check_monitoring_decision(response):
             msg = self.user.generate_message()
@@ -158,8 +157,8 @@ class UserMonitor:
         return max(0.1, delay)
 
     def wait_until_next_decision(self) -> int:
-        # Wait between 10 and 30 seconds before next decision
-        wait_time = random.randint(10, 30)
+        # Wait between 5 and 20 seconds before next decision
+        wait_time = random.randint(5, 20)
         print(f"=== Waiting for {wait_time} seconds until next decision")
         return wait_time
 
