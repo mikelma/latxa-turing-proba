@@ -2,6 +2,7 @@ import socket
 import time
 import selectors
 from argparse import ArgumentParser
+import random
 
 from user import User, UserMonitor
 
@@ -64,14 +65,20 @@ irc.setblocking(False)
 # Register socket for "writable" events so we know when the connection finishes
 sel.register(irc, selectors.EVENT_WRITE)
 
-time_join = time.time()
+time_last_message = time.time()
+time_wait = args.init_wait
+msg_recieved = False
 
 while True:
-    if time.time() - time_join >= args.init_wait:
+    if time.time() - time_last_message >= time_wait or msg_recieved:
+        msg_recieved = False
         # Decide whether to write to the channel or not
         result = user_monitor.decide_message()
         if result is not None:
             send_message(irc, args.channel, result)
+        else:
+            time_last_message = time.time()
+            time_wait = user_monitor.wait_until_next_decision()
 
     events = sel.select(timeout=1)
 
@@ -100,6 +107,7 @@ while True:
                     message_text = message_parts[1].strip()
 
                     user.log_message(sender_nick, message_text)
+                    msg_recieved = True
 
                     # Check for the debug command "!test"
                     if message_text == "!test":

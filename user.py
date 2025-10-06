@@ -5,7 +5,9 @@ import time
 from openai import OpenAI
 import jinja2 as j2
 
-SYSTEM_PROMPT = j2.Template(
+from typos import add_typos
+
+SYSTEM_PROMPT_BASIC = j2.Template(
     "You are an AI infiltrated among humans and your job is to act as one of them. They need to find Latxa (you), but you must not reveal your true identity. "
     "You will speak only in Basque, as the rest of the humans do. Your codename will be user: {{username}}. You do not need to ALWAYS interact, but you must do it often enough to not raise suspicion. "
     "AVOID answering to your own messages. "
@@ -13,10 +15,22 @@ SYSTEM_PROMPT = j2.Template(
     # "Your personality will be shy, introverted, and a bit anxious. You will try to avoid drawing attention to yourself. "
 )
 
+SYSTEM_PROMPT = j2.Template(
+    "You are a third-year student in the Artificial Intelligence degree program at the Faculty of Computer Science in Donostia, UPV/EHU. "
+    "You're playing a role-playing game similar to the assassin game, where participants have to guess who Latxa is — the LLM developed by HiTZ, the Basque Center for Language Technology (Hizkuntza Teknologiako Zentroa) at UPV/EHU. "
+    "All the users will try to guess who Latxa is, and in the same way they will need to mislead the others to think they are Latxa. "
+    "To do this, use an informal tone and speak in the dialect of someone from Donostia (for example, use the auxiliary verb 'det' instead of 'dut')."
+    # "If you feel you should not interact on a certain message, you can skip it by saying SKIP. Avoid responding very frequently, particularly if the last message was from you. "
+    "You should write as a 20 year old young that is using a chat, that is, having some typos or non standard words and sayings are recomendable. Do not make big mistakes, just small typos, casing, and non standard words. Do not change verb order or case."
+    "You are {{username}}, there is no need to write it in the output."
+    "Today's date is {date}."
+    "Let's play!"
+)
+
 SYSTEM_PROMPT_MONITORING = j2.Template(
     "You are an AI assistant that must tell a chat user called {{username}} whether it is an appropriate time of the conversation to write a message or not."
-    "Remember that {{username}} do not need to ALWAYS interact. A good rule of thumb is to interact whenever there is a question to be answered or the conversation will not develop further naturally. "
-    "{{username}} should avoid responding very frequently, particularly if the last message was from {{username}}. "
+    "Remember that {{username}} do not need to ALWAYS interact. A good rule of thumb is to interact in the chat whenever there is a question to be answered or the conversation will not develop further naturally. "
+    "{{username}} should avoid responding very frequently, particularly if the last message was from {{username}}. But it is a very good idea to answer whenever someone directly asks something to {{username}}. "
     # "Your personality will be shy, introverted, and a bit anxious. You will try to avoid drawing attention to yourself. "
 )
 
@@ -41,7 +55,7 @@ class User:
     def decide_message(self) -> Optional[str]:
         # if random.uniform(0, 1) < 0.1:
         msg = self.generate_message()
-        if msg == "SKIP":
+        if "SKIP" in msg:
             print("=== Not sending (SKIP)")
             return None
         
@@ -60,7 +74,7 @@ class User:
         )
         role = self.username if role is None else role
         prompt += f"<|start_header_id|>{role}<|end_header_id|>\n"
-        print(prompt)
+        # print(prompt)
         response = self.client.completions.create(
             model=self.model_name,
             prompt=prompt,
@@ -72,13 +86,13 @@ class User:
         return self.postprocess_message(msg)
     
     def postprocess_message(self, msg: str) -> str:
-        # TODO: Basic post-processing to add typos to the message
-        return msg
+        # Basic post-processing to add typos to the message
+        return add_typos(msg)
 
 
 
 class UserMonitor:
-    def __init__(self, user: User, cpm: int = 280, cpm_std: int = 1.75, delay_activated: bool = True):
+    def __init__(self, user: User, cpm: int = 300, cpm_std: int = 1.5, delay_activated: bool = True):
         self.counter = 0
 
         self.user = user
@@ -101,7 +115,7 @@ class UserMonitor:
         msg = "\n".join([f"[{entry['role']}]: {entry['content']}" for entry in history])
         return msg
 
-    def decide_message(self) -> bool:
+    def decide_message(self) -> str:
 
         # Ask the model whether to write or not
         clean_history = self.format_history(self.user.messages)
@@ -124,12 +138,13 @@ class UserMonitor:
             msg = None
         
         # Apply delay to simulate typing
-        if self.delay_activated and msg is not None:
-            delay_time = self.delay_message(msg)
-            print(f"=== Waiting for {delay_time:.2f} seconds before sending the message")
-            time.sleep(delay_time)
+        if msg is not None:
+            if self.delay_activated:
+                delay_time = self.delay_message(msg)
+                print(f"=== Waiting for {delay_time:.2f} seconds before sending the message")
+                time.sleep(delay_time)
 
-        self.user.log_message(self.user.username, response)
+            self.user.log_message(self.user.username, msg)
 
         return msg
 
@@ -142,6 +157,11 @@ class UserMonitor:
         # Minimum delay of 0.1 seconds
         return max(0.1, delay)
 
+    def wait_until_next_decision(self) -> int:
+        # Wait between 10 and 30 seconds before next decision
+        wait_time = random.randint(10, 30)
+        print(f"=== Waiting for {wait_time} seconds until next decision")
+        return wait_time
 
 
 if __name__ == "__main__":
