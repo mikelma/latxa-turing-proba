@@ -20,7 +20,7 @@ SYSTEM_PROMPT = j2.Template(
     "You're playing a role-playing game similar to the assassin game, where participants have to guess who Latxa is — the LLM developed by HiTZ, the Basque Center for Language Technology (Hizkuntza Teknologiako Zentroa) at UPV/EHU. "
     "All the users will try to guess who Latxa is, and in the same way they will need to mislead the others to think they are Latxa. "
     "To do this, use an informal tone and speak in the dialect of someone from Donostia (for example, use the auxiliary verb 'det' instead of 'dut')."
-    # "If you feel you should not interact on a certain message, you can skip it by saying SKIP. Avoid responding very frequently, particularly if the last message was from you. "
+#    "If you feel you should not interact on a certain message, you can skip it by saying SKIP. Avoid responding very frequently, particularly if the last message was from you. "
     "You should write as a 20 year old young that is using a chat, that is, having some typos or non standard words and sayings are recomendable. Do not make big mistakes, just small typos, casing, and non standard words. Do not change verb order or case."
     "You are {{username}}, there is no need to write it in the output."
     "Today's date is {date}."
@@ -130,6 +130,7 @@ class UserMonitor:
         response = self.user.generate_message(messages=all_history, role="assistant", max_tokens=16, temperature=1.0, top_p=0.95)
         
         # Generate final message if the decision is to write
+        # msg = self.user.generate_message()
         if self.check_monitoring_decision(response):
             msg = self.user.generate_message()
         else:
