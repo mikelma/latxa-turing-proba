@@ -92,7 +92,7 @@ class User:
 
 
 class UserMonitor:
-    def __init__(self, user: User, cpm: int = 300, cpm_std: int = 1.5, delay_activated: bool = True):
+    def __init__(self, user: User, cpm: int = 400, cpm_std: int = 1.5, delay_activated: bool = True):
         self.counter = 0
 
         self.user = user
@@ -127,11 +127,10 @@ class UserMonitor:
         ]
 
         all_history = self.system_prompt + user_prompt
-        response = self.user.generate_message(messages=all_history, role="assistant", max_tokens=16, temperature=1.0, top_p=0.95)
+        response = self.user.generate_message(messages=all_history, role="assistant", max_tokens=16, temperature=2.0, top_p=0.8)
         
         # Generate final message if the decision is to write
-        # msg = self.user.generate_message()
-        if self.check_monitoring_decision(response):
+        if self.check_monitoring_decision(response) or random.random():
             msg = self.user.generate_message()
         else:
             print("=== Not sending")
@@ -155,7 +154,7 @@ class UserMonitor:
         print(f"=== Delaying message '{msg}' for {delay:.2f} seconds")
 
         # Minimum delay of 0.1 seconds
-        return max(0.1, delay)
+        return max(0.1, delay - 5) # Delay minus 5 seconds to account for processing time
 
     def wait_until_next_decision(self) -> int:
         # Wait between 5 and 20 seconds before next decision
