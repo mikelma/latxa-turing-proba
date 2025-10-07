@@ -66,7 +66,7 @@ defaults:
     notify: off
 
 # Location for chat logs.
-log_dir: "/home/laborategiak/tiny_logs"
+log_dir: "./tiny_logs"
 
 # Limits the maximum number of messages stored in each tab. Default is
 # unlimited.
