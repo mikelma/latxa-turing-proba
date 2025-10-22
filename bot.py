@@ -117,6 +117,9 @@ while True:
             data = irc.recv(4096).decode("utf-8", "ignore")
             print("\x1b[34m" + data + "\x1b[0m", end="")
 
+            if "End of /NAMES list" in data:
+                channel_names = data.split("\n")[-3].strip().split(":")[-1].split(" ")
+
             # Respond to server PING to avoid disconnection
             if data.startswith("PING"):
                 send_data(irc, data.replace("PING", "PONG"))
