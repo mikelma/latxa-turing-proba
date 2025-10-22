@@ -174,7 +174,7 @@ class UserMonitor:
             print(f"=== Waiting for {delay_time:.2f} seconds before sending the message")
             time.sleep(delay_time)
 
-            self.user.log_message(self.user.username, msg)
+        self.user.log_message(self.user.username, msg)
 
         return msg
 
@@ -185,7 +185,7 @@ class UserMonitor:
         print(f"=== Delaying message '{msg}' for {delay:.2f} seconds")
 
         # Minimum delay of 0.1 seconds
-        return max(0.1, delay - self.user.time_correction) # Delay minus 5 seconds to account for processing time
+        return max(0.1, delay + self.user.time_correction) # Delay minus 5 seconds to account for processing time
 
     def wait_until_next_decision(self) -> int:
         # Wait some time before next decision

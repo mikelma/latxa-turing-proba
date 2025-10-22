@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument("--server", type=str, default="irc.libera.chat")
     parser.add_argument("--port", type=int, default=6667)
     parser.add_argument("--user-config", type=str, default="latxa_behaviours/default.yaml")
-    parser.add_argument("-n", "--nick", type=str, default="latxa")
+    parser.add_argument("-n", "--nick", type=str, default=None)
     parser.add_argument("-c", "--channel", type=str, default="#latxa-turing")
     parser.add_argument("-w", "--init-wait", type=int, default=1,
         help="waiting time from joining the channel to first msg decission",
@@ -41,7 +41,8 @@ def send_message(irc_socket, channel, message):
 args = parse_args()
 
 if args.log is None:
-    args.log = f"conversation__{args.channel.replace("#", "")}__{str(datetime.datetime.now())}.csv"
+    channel = args.channel.replace("#", "")
+    args.log = f"conversation__{channel}__{str(datetime.datetime.now())}.csv"
 
 print(f"[*] Logging conversation in {args.log}")
 
@@ -55,7 +56,7 @@ def log_msg_csv(nick, msg):
 
 if args.nick is None:
     name = random.choice(["Ander", "Amaia", "Ainhoa", "Alba", "Aitzol", "Alaitz", "Ane", "Aintzane", "Alex", "Andoni"])
-    surname = random.choice(["Agirre", "Etxeberria", "Arriola", "Goikoetxea", "Larrañaga", "Mendizabal", "Elorza", "Arozena", "Altuna", "Garate", "Odriozola", "Zabaleta", "Aranburu", "Irureta", "Erdozia", "Olabarria", "Urkizu", "Aristi", "Araneta", "Lizeaga", "Arrieta", "Etxegarai", "Aiestaran", "Zubizarreta"])
+    surname = random.choice(["Agirre", "Etxeberria", "Arriola", "Goikoetxea", "Mendizabal", "Elorza", "Arozena", "Altuna", "Garate", "Odriozola", "Zabaleta", "Aranburu", "Irureta", "Erdozia", "Olabarria", "Urkizu", "Aristi", "Araneta", "Lizeaga", "Arrieta", "Etxegarai", "Aiestaran", "Zubizarreta"])
     args.nick = f"{name}-{surname}"
 
 print(f"[*] Latxa's nick: {args.nick}")
@@ -67,7 +68,7 @@ with open(args.user_config) as stream:
         print(exc)
         exit(0)
 
-channel_names = []
+channel_names = [args.nick]
 user = User(user_config=user_config, username=args.nick, chat_users=channel_names)
 user_monitor = UserMonitor(user=user, config=user_config)
 
