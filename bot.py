@@ -2,7 +2,9 @@ import socket
 import time
 import selectors
 from argparse import ArgumentParser
+import datetime
 import random
+import csv
 
 from user import User, UserMonitor
 
@@ -13,11 +15,12 @@ def parse_args():
     # fmt: off
     parser.add_argument("--server", type=str, default="irc.libera.chat")
     parser.add_argument("--port", type=int, default=6667)
-    parser.add_argument("-n", "--nick", type=str, default="latxa")
+    parser.add_argument("-n", "--nick", type=str, default=None)
     parser.add_argument("-c", "--channel", type=str, default="#latxa-turing")
     parser.add_argument("-w", "--init-wait", type=int, default=1,
         help="waiting time from joining the channel to first msg decission",
     )
+    parser.add_argument("-l", "--log", type=str, default=None)
     # fmt: on
 
     return parser.parse_args()
@@ -34,6 +37,26 @@ def send_message(irc_socket, channel, message):
 
 
 args = parse_args()
+
+if args.log is None:
+    args.log = f"conversation__{args.channel.replace("#", "")}__{str(datetime.datetime.now())}.csv"
+
+print(f"[*] Logging conversation in {args.log}")
+
+msg_logs_f = open(args.log, "w", newline="") 
+fieldnames = ["date", "nick", "channel", "msg"]
+log_writer = csv.DictWriter(msg_logs_f, fieldnames=fieldnames)
+log_writer.writeheader()
+
+def log_msg_csv(nick, msg):
+    log_writer.writerow({"date": str(datetime.datetime.now()), "nick": nick, "channel": args.channel, "msg": msg})
+
+if args.nick is None:
+    name = random.choice(["Ander", "Amaia", "Ainhoa", "Alba", "Aitzol", "Alaitz", "Ane", "Aintzane", "Alex", "Andoni"])
+    surname = random.choice(["Agirre", "Etxeberria", "Arriola", "Goikoetxea", "Larrañaga", "Mendizabal", "Elorza", "Arozena", "Altuna", "Garate", "Odriozola", "Zabaleta", "Aranburu", "Irureta", "Erdozia", "Olabarria", "Urkizu", "Aristi", "Araneta", "Lizeaga", "Arrieta", "Etxegarai", "Aiestaran", "Zubizarreta"])
+    args.nick = f"{name}-{surname}"
+
+print(f"[*] Latxa's nick: {args.nick}")
 
 user = User()
 user_monitor = UserMonitor(user=user)
@@ -76,6 +99,7 @@ while True:
         result = user_monitor.decide_message()
         if result is not None:
             send_message(irc, args.channel, result)
+            log_msg_csv(args.nick, result)
         else:
             time_last_message = time.time()
             time_wait = user_monitor.wait_until_next_decision()
@@ -107,6 +131,7 @@ while True:
                     message_text = message_parts[1].strip()
 
                     user.log_message(sender_nick, message_text)
+                    log_msg_csv(sender_nick, message_text)
                     msg_recieved = True
 
                     # Check for the debug command "!test"

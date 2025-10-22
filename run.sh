@@ -68,17 +68,6 @@ room=$1
 username="$(shuf -n 1 izenak.txt)-$(shuf -n 1 abizenak.txt)"
 echo "username: $username"
 
-# Ander
-# Amaia
-# Ainhoa
-# Alba
-# Aitzol
-# Alaitz
-# Ane
-# Aintzane
-# Alex
-# Andoni
-
 sed -i "s/proba/$username/g" cfg.yaml
 sed -i "s/turing/$room/g" cfg.yaml
 
