@@ -2,9 +2,13 @@ import socket
 import time
 import selectors
 from argparse import ArgumentParser
+<<<<<<< HEAD
 import datetime
 import random
 import csv
+=======
+import yaml
+>>>>>>> latxa_profile
 
 from user import User, UserMonitor
 
@@ -15,7 +19,12 @@ def parse_args():
     # fmt: off
     parser.add_argument("--server", type=str, default="irc.libera.chat")
     parser.add_argument("--port", type=int, default=6667)
+<<<<<<< HEAD
     parser.add_argument("-n", "--nick", type=str, default=None)
+=======
+    parser.add_argument("--user-config", type=str, default="latxa_behaviours/default.yaml")
+    parser.add_argument("-n", "--nick", type=str, default="latxa")
+>>>>>>> latxa_profile
     parser.add_argument("-c", "--channel", type=str, default="#latxa-turing")
     parser.add_argument("-w", "--init-wait", type=int, default=1,
         help="waiting time from joining the channel to first msg decission",
@@ -38,6 +47,7 @@ def send_message(irc_socket, channel, message):
 
 args = parse_args()
 
+<<<<<<< HEAD
 if args.log is None:
     args.log = f"conversation__{args.channel.replace("#", "")}__{str(datetime.datetime.now())}.csv"
 
@@ -60,6 +70,23 @@ print(f"[*] Latxa's nick: {args.nick}")
 
 user = User()
 user_monitor = UserMonitor(user=user)
+=======
+# Load user configuration
+with open(args.user_config) as stream:
+    try:
+        user_config = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+        exit(0)
+
+chat_users = ["Iker", "Ane", "Miren", "Jon"]
+user = User(user_config=user_config, username=args.nick, chat_users=chat_users)
+user_monitor = UserMonitor(user=user, config=user_config)
+
+if user.username:
+    args.nick = user.username
+
+>>>>>>> latxa_profile
 
 sel = selectors.DefaultSelector()
 
@@ -99,10 +126,17 @@ while True:
         result = user_monitor.decide_message()
         if result is not None:
             send_message(irc, args.channel, result)
+<<<<<<< HEAD
             log_msg_csv(args.nick, result)
         else:
             time_last_message = time.time()
             time_wait = user_monitor.wait_until_next_decision()
+=======
+            if user_config["proactivity"]["enable_trigger_after_own_msg"]:
+                msg_recieved = True
+        time_wait = user_monitor.wait_until_next_decision()
+        time_last_message = time.time()
+>>>>>>> latxa_profile
 
     events = sel.select(timeout=1)
 
@@ -134,8 +168,15 @@ while True:
                     message_text = message_parts[1].strip()
 
                     user.log_message(sender_nick, message_text)
+<<<<<<< HEAD
                     log_msg_csv(sender_nick, message_text)
                     msg_recieved = True
+=======
+                    if user_config["proactivity"]["enable_trigger_after_msg"]:
+                        if sender_nick != args.nick:
+                            time_last_message = time.time()
+                            msg_recieved = True
+>>>>>>> latxa_profile
 
                     # Check for the debug command "!test"
                     if message_text == "!test":

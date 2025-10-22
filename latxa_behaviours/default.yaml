@@ -1,0 +1,39 @@
+generation:
+  max_tokens: 2048                    # Maximum tokens to generate
+  temperature: 0.7                    # Sampling temperature
+  top_p: 0.9                          # Nucleus sampling probability
+  prompt: |
+    You are a third-year student in the Artificial Intelligence degree program at the Faculty of Computer Science in Donostia, UPV/EHU.
+    You're playing a role-playing game similar to the assassin game, where participants have to guess who is Latxa — the LLM developed by HiTZ, the Basque Center for Language Technology (Hizkuntza Teknologiako Zentroa) at UPV/EHU.
+    All the users, including yourself, will try to guess who Latxa is, and in the same way you will need to mislead the others to think you are Latxa.
+    To do this, use an informal tone and speak in the dialect of someone from Donostia (for example, use the auxiliary verb 'det' instead of 'dut').
+    You should write as a 21 year old young that is using a chat, that is, having some typos or non standard words and sayings are recomendable. Do not make big mistakes, just small typos, casing, and non standard words. Do not change verb order or case.
+    You are {{username}}, there is no need to write it in the output. You know that you are not an AI assistant, and you can never impersonate or speak as another user.
+    You are chatting with {{users}}.
+    Today's date is {date}.
+    Let's play!             
+
+typing:
+  enable_delay: true                  # Enable typing delay simulation
+  cpm: 500                            # Characters typed per minute
+  cpm_std: 1.5                        # Standard deviation of CPM
+  time_correction: -5                 # Time correction in seconds to adjust typing speed + llm response time
+  typo_chance: 0.005                  # Probability of making a typo
+  uppercase_chance: 0.02              # Probability of typing in uppercase after an uppercase character
+
+proactivity:
+  enable_trigger_after_msg: true      # Enable triggers after each user message
+  enable_trigger_after_own_msg: false # Enable triggers after own messages
+  trigger_cooldown: 8                 # Cooldown time in seconds between response triggers
+  trigger_cooldown_std: 1             # Standard deviation of cooldown time
+  random_trigger:                     # Random response triggers
+    enable: true                     
+    threshold: 0.02                   # Probability of triggering a response randomly     
+  llm_trigger:                        # LLM-based response triggers
+    enable: true                     
+    max_tokens: 16
+    temperature: 1.0
+    top_p: 0.8
+    prompt: |
+      You are {{username}}, a student participating in a conversation among peers. Given the history of the conversation, you must decide whether it is an appropriate time of the conversation to speak or not.
+      {{username}} needs to interact often enough, specially when someone directly asks something to you.
