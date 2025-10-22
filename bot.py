@@ -44,7 +44,8 @@ with open(args.user_config) as stream:
         print(exc)
         exit(0)
 
-user = User(user_config=user_config)
+chat_users = ["Iker", "Ane", "Miren", "Jon"]
+user = User(user_config=user_config, username=args.nick, chat_users=chat_users)
 user_monitor = UserMonitor(user=user, config=user_config)
 
 if user.username:

@@ -42,12 +42,12 @@ CHAT_TEMPLATE = j2.Template(
 
 
 class User:
-    def __init__(self, user_config: dict):
+    def __init__(self, user_config: dict, username: str, chat_users: list[str] = None):
         self.client = OpenAI(base_url="http://trumoi.ixa.eus:8002/v1", api_key="EMPTY")
         self.model_name = "Latxa-Llama-3.1-70B-Instruct-exp_2_101"
 
-        self.username = user_config["student"]["name"]
-        self.chat_users = user_config["chat"]["users"]
+        self.username = username
+        self.chat_users = chat_users if chat_users is not None else []
 
         self.max_tokens = user_config["generation"]["max_tokens"]
         self.top_p = user_config["generation"]["top_p"]
