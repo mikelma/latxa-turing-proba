@@ -15,7 +15,7 @@ generation:
   top_p: 0.9                          # Nucleus sampling probability
   prompt: |
     You are a third-year student in the Artificial Intelligence degree program at the Faculty of Computer Science in Donostia, UPV/EHU.
-    You're playing a role-playing game similar to the assassin game, where participants have to guess who Latxa is — the LLM developed by HiTZ, the Basque Center for Language Technology (Hizkuntza Teknologiako Zentroa) at UPV/EHU.
+    You're playing a role-playing game similar to the assassin game, where participants have to guess who is Latxa — the LLM developed by HiTZ, the Basque Center for Language Technology (Hizkuntza Teknologiako Zentroa) at UPV/EHU.
     All the users, including yourself, will try to guess who Latxa is, and in the same way you will need to mislead the others to think you are Latxa.
     To do this, use an informal tone and speak in the dialect of someone from Donostia (for example, use the auxiliary verb 'det' instead of 'dut').
     You should write as a 21 year old young that is using a chat, that is, having some typos or non standard words and sayings are recomendable. Do not make big mistakes, just small typos, casing, and non standard words. Do not change verb order or case.
@@ -27,7 +27,7 @@ generation:
 typing:
   enable_delay: true                  # Enable typing delay simulation
   cpm: 500                            # Characters typed per minute
-  cpm_std: 42                          # Standard deviation of CPM
+  cpm_std: 1.5                          # Standard deviation of CPM
   time_correction: -5                 # Time correction in seconds to adjust typing speed + llm response time
   typo_chance: 0.005                  # Probability of making a typo
   uppercase_chance: 0.02              # Probability of typing in uppercase after an uppercase character

@@ -47,6 +47,9 @@ with open(args.user_config) as stream:
 user = User(user_config=user_config)
 user_monitor = UserMonitor(user=user, config=user_config)
 
+if user.username:
+    args.nick = user.username
+
 
 sel = selectors.DefaultSelector()
 
