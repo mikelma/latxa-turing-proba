@@ -92,7 +92,7 @@ class User:
         )
         role = self.username if role is None else role
         prompt += f"<|start_header_id|>{role}<|end_header_id|>\n"
-        # print(prompt)
+        # print("==="*10 + "\n" + prompt + "\n" + "==="*10)
         response = self.client.completions.create(
             model=self.model_name,
             prompt=prompt,
@@ -150,7 +150,7 @@ class UserMonitor:
         msg = None
 
         if self.llm_enabled:
-            clean_history = self.format_history(self.user.messages)
+            clean_history = self.format_history(self.user.messages[1:])  # Exclude system prompt
             user_prompt = [
                 {
                     "role": "user",
