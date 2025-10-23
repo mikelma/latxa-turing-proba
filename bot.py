@@ -46,13 +46,17 @@ if args.log is None:
 
 print(f"[*] Logging conversation in {args.log}")
 
-msg_logs_f = open(args.log, "w", newline="") 
-fieldnames = ["date", "nick", "channel", "msg"]
-log_writer = csv.DictWriter(msg_logs_f, fieldnames=fieldnames)
-log_writer.writeheader()
 
-def log_msg_csv(nick, msg):
-    log_writer.writerow({"date": str(datetime.datetime.now()), "nick": nick, "channel": args.channel, "msg": msg})
+def log_msg_csv(nick, msg, w_header=False):
+    with open(args.log, "a", newline="") as f:
+        fieldnames = ["date", "nick", "channel", "msg"]
+        log_writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if w_header:
+            log_writer.writeheader()
+        else:
+            log_writer.writerow({"date": str(datetime.datetime.now()), "nick": nick, "channel": args.channel, "msg": msg})
+
+log_msg_csv(None, None, w_header=True)
 
 if args.nick is None:
     name = random.choice(["Ander", "Amaia", "Ainhoa", "Alba", "Aitzol", "Alaitz", "Ane", "Aintzane", "Alex", "Andoni"])
@@ -74,7 +78,6 @@ user_monitor = UserMonitor(user=user, config=user_config)
 
 if user.username:
     args.nick = user.username
-
 
 sel = selectors.DefaultSelector()
 
