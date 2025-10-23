@@ -18,8 +18,8 @@ typing:
   cpm: 500                            # Characters typed per minute
   cpm_std: 1.5                        # Standard deviation of CPM
   time_correction: -5                 # Time correction in seconds to adjust typing speed + llm response time
-  typo_chance: 0.005                  # Probability of making a typo
-  uppercase_chance: 0.02              # Probability of typing in uppercase after an uppercase character
+  typo_chance: 0.018                  # Probability of making a typo
+  uppercase_chance: 0.01              # Probability of typing in uppercase after an uppercase character
 
 proactivity:
   enable_trigger_after_msg: true      # Enable triggers after each user message
@@ -28,12 +28,12 @@ proactivity:
   trigger_cooldown_std: 1             # Standard deviation of cooldown time
   random_trigger:                     # Random response triggers
     enable: true                     
-    threshold: 0.02                   # Probability of triggering a response randomly     
+    threshold: 0.04                   # Probability of triggering a response randomly     
   llm_trigger:                        # LLM-based response triggers
     enable: true                     
     max_tokens: 16
-    temperature: 1.0
-    top_p: 0.8
+    temperature: 0.2
+    top_p: 1.0
     prompt: |
       You are {{username}}, a student participating in a conversation among peers. Given the history of the conversation, you must decide whether it is an appropriate time of the conversation to speak or not.
       {{username}} needs to interact often enough, specially when someone directly asks something to you.

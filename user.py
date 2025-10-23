@@ -73,7 +73,8 @@ class User:
     def decide_message(self) -> Optional[str]:
         # if random.uniform(0, 1) < 0.1:
         msg = self.generate_message()
-        if "SKIP" in msg:
+        lower_msg = str(msg).lower()
+        if "skip" in lower_msg or lower_msg == "none":
             print("=== Not sending (SKIP)")
             return None
         
@@ -135,7 +136,8 @@ class UserMonitor:
     
     def check_monitoring_decision(self, msg: str) -> bool:
 
-        if "SKIP" in msg or "NO" in msg:
+        lower_msg = msg.lower()
+        if "skip" in lower_msg or "no" in lower_msg:
             return False
         
         return True

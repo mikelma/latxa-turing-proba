@@ -112,6 +112,7 @@ while True:
         msg_recieved = False
         # Decide whether to write to the channel or not
         result = user_monitor.decide_message()
+        print(user.chat_users)
         if result is not None:
             send_message(irc, args.channel, result)
             log_msg_csv(args.nick, result)
@@ -138,6 +139,7 @@ while True:
            
             if "End of /NAMES list" in data:
                 channel_names = data.split("\n")[-3].strip().split(":")[-1].split(" ")
+                channel_names.remove(user.username)
                 user.chat_users = channel_names
 
             # Respond to server PING to avoid disconnection
