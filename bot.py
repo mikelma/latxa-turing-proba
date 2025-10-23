@@ -139,7 +139,8 @@ while True:
            
             if "End of /NAMES list" in data:
                 channel_names = data.split("\n")[-3].strip().split(":")[-1].split(" ")
-                channel_names.remove(user.username)
+                if user.username in channel_names:
+                    channel_names.remove(user.username)
                 user.chat_users = channel_names
 
             # Respond to server PING to avoid disconnection
