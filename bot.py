@@ -16,7 +16,7 @@ def parse_args():
     # fmt: off
     parser.add_argument("--server", type=str, default="irc.libera.chat")
     parser.add_argument("--port", type=int, default=6667)
-    parser.add_argument("--user-config", type=str, default="latxa_behaviours/default.yaml")
+    parser.add_argument("--user-config", type=str, default="latxa_behaviours/eu/default.yaml")
     parser.add_argument("-n", "--nick", type=str, default=None)
     parser.add_argument("-c", "--channel", type=str, default="#latxa-turing")
     parser.add_argument("-w", "--init-wait", type=int, default=1,
@@ -111,21 +111,25 @@ time_wait = args.init_wait
 msg_recieved = False
 
 while True:
-    if time.time() - time_last_message >= time_wait or msg_recieved:
-        msg_recieved = False
-        # Decide whether to write to the channel or not
-        result = user_monitor.decide_message()
-        print(user.chat_users)
-        if result is not None:
-            send_message(irc, args.channel, result)
-            log_msg_csv(args.nick, result)
-        else:
-            time_last_message = time.time()
+    
+    # Don't send anything if there are no other users in the channel
+    if len(user.chat_users) > 0:
+    
+        if time.time() - time_last_message >= time_wait or msg_recieved:
+            msg_recieved = False
+            # Decide whether to write to the channel or not
+            result = user_monitor.decide_message()
+            print(user.chat_users)
+            if result is not None:
+                send_message(irc, args.channel, result)
+                log_msg_csv(args.nick, result)
+                if user_config["proactivity"]["enable_trigger_after_own_msg"]:
+                    msg_recieved = True
+            else:
+                time_last_message = time.time()
+                time_wait = user_monitor.wait_until_next_decision()
             time_wait = user_monitor.wait_until_next_decision()
-            if user_config["proactivity"]["enable_trigger_after_own_msg"]:
-                msg_recieved = True
-        time_wait = user_monitor.wait_until_next_decision()
-        time_last_message = time.time()
+            time_last_message = time.time()
 
     events = sel.select(timeout=1)
 
@@ -144,6 +148,7 @@ while True:
                 channel_names = data.split("\n")[-3].strip().split(":")[-1].split(" ")
                 if user.username in channel_names:
                     channel_names.remove(user.username)
+                print(channel_names)
                 user.chat_users = channel_names
 
             # Respond to server PING to avoid disconnection

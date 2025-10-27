@@ -52,7 +52,8 @@ class User:
         self.max_tokens = user_config["generation"]["max_tokens"]
         self.top_p = user_config["generation"]["top_p"]
         self.temperature = user_config["generation"]["temperature"]
-        self.user_prompt_template = user_config["generation"]["prompt"]
+        self.user_role = user_config["generation"]["role"]
+        self.system_prompt = j2.Template(user_config["generation"]["prompt"]).render(username=self.username, users=", ".join(self.chat_users[:-1]) + " and " + self.chat_users[-1])
 
         self.cpm = user_config["typing"]["cpm"]
         self.cpm_std = user_config["typing"]["cpm_std"]
@@ -60,38 +61,20 @@ class User:
         self.typo_chance = user_config["typing"]["typo_chance"]
         self.uppercase_chance = user_config["typing"]["uppercase_chance"]
 
-        system_prompt = j2.Template(self.user_prompt_template).render(username=self.username, users=", ".join(self.chat_users[:-1]) + " and " + self.chat_users[-1])
         self.messages = [
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": self.system_prompt},
         ]
 
 
     def log_message(self, user: str, msg: str) -> None:
         print(f"<<< [{user}] {msg}")
         self.messages.append({"role": f"user:{user}", "content": msg})
-
-    def decide_message(self) -> Optional[str]:
-        # if random.uniform(0, 1) < 0.1:
-        msg = self.generate_message()
-        lower_msg = str(msg).lower()
-        if "skip" in lower_msg or lower_msg == "none":
-            print("=== Not sending (SKIP)")
-            return None
-        
-        self.messages.append({"role": f"user:{self.username}", "content": msg})
-        print(f">>> Sending message: '{msg}'")
-
-        # else:
-        #    print("=== Not sending")
-        #    msg = None
-
-        return msg
     
     def generate_message(self, messages: str = None, role: str = None, max_tokens: int = None, temperature: float = None, top_p: float = None) -> str:
         prompt = CHAT_TEMPLATE.render(
             messages=self.messages if messages is None else messages,
         )
-        role = self.username if role is None else role
+        role = self.user_role if role is None else role
         prompt += f"<|start_header_id|>{role}<|end_header_id|>\n"
         # print(prompt)
         response = self.client.completions.create(
@@ -130,9 +113,7 @@ class UserMonitor:
         self.delay_activated = config["typing"]["enable_delay"]
         
         self.llm_prompt_template = config["proactivity"]["llm_trigger"]["prompt"]
-        self.system_prompt = [
-            {"role": "system", "content": j2.Template(self.llm_prompt_template).render(username=user.username)},
-        ]
+        self.system_prompt = j2.Template(self.llm_prompt_template).render(username=user.username)
     
     def check_monitoring_decision(self, msg: str) -> bool:
 
@@ -152,16 +133,19 @@ class UserMonitor:
         msg = None
 
         if self.llm_enabled:
-            clean_history = self.format_history(self.user.messages)
-            user_prompt = [
+            clean_history = self.format_history(self.user.messages[1:]) # Exclude system prompt
+            final_messages = [
+                {
+                    "role": "system",
+                    "content": self.system_prompt
+                },
                 {
                     "role": "user",
                     "content": clean_history + f"\n\nGiven the above chat history, should {self.user.username} write on the chat now or wait until later? Answer only with YES or NO."
                 }
             ]
 
-            all_history = self.system_prompt + user_prompt
-            response = self.user.generate_message(messages=all_history, role="assistant", max_tokens=self.llm_max_tokens, temperature=self.llm_temperature, top_p=self.llm_top_p)
+            response = self.user.generate_message(messages=final_messages, role="assistant", max_tokens=self.llm_max_tokens, temperature=self.llm_temperature, top_p=self.llm_top_p)
             if self.check_monitoring_decision(response):
                 msg = self.user.generate_message()
         
@@ -169,14 +153,14 @@ class UserMonitor:
             if random.uniform(0, 1) < self.rnd_threshold:
                 msg = self.user.generate_message()
         
-        
         # Apply delay to simulate typing
-        if msg is not None and self.delay_activated:
-            delay_time = self.delay_message(msg)
-            print(f"=== Waiting for {delay_time:.2f} seconds before sending the message")
-            time.sleep(delay_time)
+        if msg is not None:
+            if self.delay_activated:
+                delay_time = self.delay_message(msg)
+                print(f"=== Waiting for {delay_time:.2f} seconds before sending the message")
+                time.sleep(delay_time)
 
-        self.user.log_message(self.user.username, msg)
+            self.user.log_message(self.user.username, msg)
 
         return msg
 
