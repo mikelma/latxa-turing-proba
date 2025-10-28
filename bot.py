@@ -72,7 +72,7 @@ with open(args.user_config) as stream:
         print(exc)
         exit(0)
 
-channel_names = [args.nick]
+channel_names = []
 user = User(user_config=user_config, username=args.nick, chat_users=channel_names)
 user_monitor = UserMonitor(user=user, config=user_config)
 
@@ -110,6 +110,10 @@ time_last_message = time.time()
 time_wait = args.init_wait
 msg_recieved = False
 
+time_last_check_users = time.time()
+time_check_users_wait = 15
+first_user_list = True
+
 while True:
     
     # Don't send anything if there are no other users in the channel
@@ -119,18 +123,19 @@ while True:
             msg_recieved = False
             # Decide whether to write to the channel or not
             result = user_monitor.decide_message()
-            print(user.chat_users)
             if result is not None:
                 send_message(irc, args.channel, result)
                 log_msg_csv(args.nick, result)
                 if user_config["proactivity"]["enable_trigger_after_own_msg"]:
                     msg_recieved = True
-            else:
-                time_last_message = time.time()
-                time_wait = user_monitor.wait_until_next_decision()
             time_wait = user_monitor.wait_until_next_decision()
             time_last_message = time.time()
 
+    if time.time() - time_last_check_users >= time_check_users_wait:
+        # Request the list of names in the channel
+        send_data(irc, f"NAMES {args.channel}")
+        time_last_check_users = time.time()
+    
     events = sel.select(timeout=1)
 
     for key, mask in events:
@@ -144,12 +149,24 @@ while True:
             data = irc.recv(4096).decode("utf-8", "ignore")
             print("\x1b[34m" + data + "\x1b[0m", end="")
            
-            if "End of /NAMES list" in data:
-                channel_names = data.split("\n")[-3].strip().split(":")[-1].split(" ")
-                if user.username in channel_names:
-                    channel_names.remove(user.username)
-                print(channel_names)
-                user.chat_users = channel_names
+            if ("End of /NAMES list" in data and first_user_list) or "libera.chat 353 " in data:
+                if first_user_list:
+                    channel_names = data.split("\n")[-3].strip().split(":")[-1].split(" ")
+                    first_user_list = False
+                else:
+                    channel_names = data.strip().split(":")[-1].split(" ")
+                if user.username[:16] in channel_names:
+                    channel_names.remove(user.username[:16])
+                if "@" + user.username[:15] in channel_names:
+                    channel_names.remove("@" + user.username[:15])
+                if "@ChanServ" in channel_names:
+                    channel_names.remove("@ChanServ")
+                if "/NAMES" not in channel_names:
+                    user.chat_users = [user.split("-")[0] for user in channel_names]
+                else:
+                    user.chat_users = []
+                user.update_system_prompt()
+                print(user.chat_users)
 
             # Respond to server PING to avoid disconnection
             if data.startswith("PING"):

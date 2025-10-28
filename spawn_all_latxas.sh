@@ -1,0 +1,15 @@
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-1" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-2" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-3" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-4" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-5" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-6" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-7" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-8" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-9" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-10" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-11" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-12" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-13" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-14" -w 3 &
+python bot.py --user-config "latxa_behaviours/eu/default.yaml" -c "#latxa-15" -w 3 &
