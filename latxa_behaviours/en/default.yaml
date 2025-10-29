@@ -18,7 +18,7 @@ generation:
 
 typing:
   enable_delay: true                  # Enable typing delay simulation
-  cpm: 350                            # Characters typed per minute
+  cpm: 375                            # Characters typed per minute
   cpm_std: 1.5                        # Standard deviation of the inverse CPM
   time_correction: -1                 # Time correction in seconds to adjust typing speed + llm response time
   typo_chance: 0.001                  # Probability of making a typo
@@ -40,3 +40,6 @@ proactivity:
     prompt: |
       You are {{username}}, a student participating in a conversation among peers. Given the history of the conversation, you must decide whether it is an appropriate time of the conversation to speak or not.
       {{username}} needs to interact often enough, specially when someone directly asks something to you.
+
+other:
+  update_user_list_interval: 15                      # Interval in seconds to update the user list

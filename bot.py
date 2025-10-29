@@ -59,7 +59,7 @@ def log_msg_csv(nick, msg, w_header=False):
 log_msg_csv(None, None, w_header=True)
 
 if args.nick is None:
-    name = random.choice(["Ander", "Amaia", "Ainhoa", "Alba", "Aitzol", "Alaitz", "Ane", "Aintzane", "Alex", "Andoni"])
+    name = random.choice(["Asier", "Gaizka", "Iker", "Xabier", "Gorka", "Kerman", "Edurne", "Uxue", "Garazi", "Saioa", "Irune", "Izaskun"])
     surname = random.choice(["Agirre", "Etxeberria", "Arriola", "Goikoetxea", "Mendizabal", "Elorza", "Arozena", "Altuna", "Garate", "Odriozola", "Zabaleta", "Aranburu", "Irureta", "Erdozia", "Olabarria", "Urkizu", "Aristi", "Araneta", "Lizeaga", "Arrieta", "Etxegarai", "Aiestaran", "Zubizarreta"])
     args.nick = f"{name}-{surname}"
 
@@ -111,7 +111,7 @@ time_wait = args.init_wait
 msg_recieved = False
 
 time_last_check_users = time.time()
-time_check_users_wait = 15
+time_check_users_wait = user_config['other']['update_user_list_interval']
 first_user_list = True
 
 while True:
@@ -159,6 +159,12 @@ while True:
                     channel_names.remove(user.username[:16])
                 if "@" + user.username[:15] in channel_names:
                     channel_names.remove("@" + user.username[:15])
+                firstname = user.username.split("-")[0]
+                if firstname in channel_names:
+                    channel_names.remove(user.username[:16])
+                if "@" + firstname in channel_names:
+                    channel_names.remove("@" + user.username[:15])
+                
                 if "@ChanServ" in channel_names:
                     channel_names.remove("@ChanServ")
                 if "/NAMES" not in channel_names:
